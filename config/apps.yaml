@@ -1,0 +1,18 @@
+apps:
+  - app_id: my.com.tngdigital.ewallet
+    app_name: Touch 'n Go eWallet
+    source: google_play
+    country: my
+    language: en
+    enabled: true
+    app_type: wallet_primary
+    wallet_relevance_note: Dedicated Malaysian e-wallet app.
+
+  - app_id: com.shopee.my
+    app_name: Shopee Malaysia
+    source: google_play
+    country: my
+    language: en
+    enabled: true 
+    app_type: superapp_marketplace
+    wallet_relevance_note: Superapp/marketplace app; include initially to assess wallet-related vs non-wallet-related review noise.
