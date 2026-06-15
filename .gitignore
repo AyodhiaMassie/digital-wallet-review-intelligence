@@ -21,3 +21,6 @@ artifacts/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Planning/Notes files for planning
+docs_internal/

@@ -1,16 +1,18 @@
-from datetime import datetime, timezone
 from pathlib import Path
+import sys
 from typing import Any
 
 import pandas as pd
 import yaml
-from google_play_scraper import Sort, reviews
+
+from data_ingestion.sources.google_play import GooglePlayReviewSource
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1] # root folder of project
 APP_CONFIG_PATH = PROJECT_ROOT / "config" / "apps.yaml" # path to config file
 
 REVIEW_COUNT_PER_APP = 10 # default number of revews fetched per app
+
 
 def load_app_configs(config_path: Path = APP_CONFIG_PATH) -> list[dict[str, Any]]:
     """
@@ -43,45 +45,39 @@ def fetch_reviews_for_app(app_config: dict[str, Any], review_count: int) -> pd.D
     """
 
     # get the values from the app dictionary
-    app_id = app_config["app_id"]
-    app_name = app_config["app_name"]
     country = app_config.get("country", "my")
     language = app_config.get("language", "en")
-    source = app_config.get("source", "google_play")
 
-    # reviews function fetches the reviews and returns it as a list of review dictionaries
-    raw_reviews, _ = reviews(
-        app_id,
-        lang=language,
-        country=country,
-        sort=Sort.NEWEST,
-        count=review_count,
+    # initialize google play as a review source
+    review_source = GooglePlayReviewSource()
+    
+    # fetch reviews for the app from google play
+    raw_reviews_df = review_source.fetch_reviews(
+        app_config=app_config,
+        review_count=review_count,
     )
-
-    # records date and time that data was scraped
-    scraped_at = datetime.now(timezone.utc).isoformat()
 
     # list to store app reviews (for one app)
     records = []
 
     # loop through each review dictionary
     # convert scraper's dict key names into more appropriate names   
-    for review in raw_reviews:
+    for _, review in raw_reviews_df.iterrows():
         records.append(
             {
-                "review_id": review.get("reviewId"),
-                "app_id": app_id,
-                "app_name": app_name,
-                "review_text": review.get("content"),
-                "rating": review.get("score"),
-                "review_date": review.get("at"),
-                "scraped_at": scraped_at,
-                "app_version": review.get("reviewCreatedVersion"),
-                "thumbs_up_count": review.get("thumbsUpCount"),
-                "developer_reply": review.get("replyContent"),
+                "review_id": review.get("review_id"),
+                "app_id": review.get("app_id"),
+                "app_name": review.get("app_name"),
+                "review_text": review.get("review_text"),
+                "rating": review.get("rating"),
+                "review_date": review.get("review_date"),
+                "scraped_at": review.get("scraped_at"),
+                "app_version": review.get("app_version"),
+                "thumbs_up_count": review.get("thumbs_up_count"),
+                "developer_reply": review.get("developer_reply"),
                 "language": language,
                 "country": country,
-                "source": source,
+                "source": review.get("source"),
                 "app_type": app_config.get("app_type"),
                 "wallet_relevance_note": app_config.get("wallet_relevance_note"),
             }
@@ -107,8 +103,8 @@ def fetch_reviews_for_enabled_apps(review_count_per_app: int = REVIEW_COUNT_PER_
 
         # fetch reviews for app
         app_reviews_df = fetch_reviews_for_app(
-            app_config=app_config,
-            review_count=review_count_per_app,
+            app_config=app_config, # pass configs for that app
+            review_count=review_count_per_app, # pass review count
         )
 
         # add dataframe of app reviews into all_review_dataframes list
@@ -162,6 +158,9 @@ def print_review_cards(df: pd.DataFrame, max_reviews: int = 10) -> None:
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     df = fetch_reviews_for_enabled_apps()
 
     print()
