@@ -52,12 +52,6 @@ class GooglePlayReviewSource(ReviewSource):
         # convert the list of app review dictionaries into a pandas dataframe
         review_df = pd.DataFrame(review_list)
 
-        print("RAW GOOGLE PLAY DATAFRAME COLUMNS:")
-        print(review_df.columns)
-
-        print("RAW GOOGLE PLAY DATAFRAME PREVIEW:")
-        print(review_df.head())
-
         # standardize column names
         review_df = review_df.rename(
             columns={

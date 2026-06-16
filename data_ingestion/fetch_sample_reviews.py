@@ -6,7 +6,7 @@ import pandas as pd
 import yaml
 
 from data_ingestion.sources.google_play import GooglePlayReviewSource
-
+from src.validation.summarize_review_missing_fields import summarize_review_missing_fields
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1] # root folder of project
 APP_CONFIG_PATH = PROJECT_ROOT / "config" / "apps.yaml" # path to config file
@@ -115,9 +115,23 @@ def fetch_reviews_for_enabled_apps(review_count_per_app: int = REVIEW_COUNT_PER_
         return pd.DataFrame()
 
     # combine each individual app review dataframe into one big dataframe
-    return pd.concat(all_review_dataframes, ignore_index=True)
+    all_app_reviews_df = pd.concat(all_review_dataframes, ignore_index=True)
+    
+    # create a set of app IDs that we expect to see in the fetched reviews
+    expected_app_ids = {app_config["app_id"] for app_config in app_configs}
 
-# 
+    # get summarized information on missing fields in the all app reviews dataframe
+    missing_field_summary = summarize_review_missing_fields(
+    review_df=all_app_reviews_df,
+    expected_app_ids=expected_app_ids,
+)
+    # print out the summarized information
+    print("\nSummary of missing fields in all app review dataframe:")
+    for field_name, value in missing_field_summary.items():
+        print(f"{field_name}: {value}")
+    
+    return all_app_reviews_df
+
 def print_review_cards(df: pd.DataFrame, max_reviews: int = 10) -> None:
     """
     Print reviews in a readable vertical format for manual inspection.
@@ -161,7 +175,7 @@ if __name__ == "__main__":
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-    df = fetch_reviews_for_enabled_apps()
+    df = fetch_reviews_for_enabled_apps() 
 
     print()
     print(f"Collected {len(df)} reviews in total.")
