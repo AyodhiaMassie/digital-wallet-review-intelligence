@@ -7,6 +7,7 @@ import yaml
 
 from data_ingestion.sources.google_play import GooglePlayReviewSource
 from src.validation.summarize_review_missing_fields import summarize_review_missing_fields
+from src.validation.deduplicate_reviews import deduplicate_reviews
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1] # root folder of project
 APP_CONFIG_PATH = PROJECT_ROOT / "config" / "apps.yaml" # path to config file
@@ -124,13 +125,22 @@ def fetch_reviews_for_enabled_apps(review_count_per_app: int = REVIEW_COUNT_PER_
     missing_field_summary = summarize_review_missing_fields(
     review_df=all_app_reviews_df,
     expected_app_ids=expected_app_ids,
-)
+    )
+
     # print out the summarized information
     print("\nSummary of missing fields in all app review dataframe:")
     for field_name, value in missing_field_summary.items():
         print(f"{field_name}: {value}")
     
-    return all_app_reviews_df
+    # deduplicate all reviews dataframe
+    deduplicated_reviews_df, duplicates_skipped = deduplicate_reviews(
+        review_df=all_app_reviews_df
+    )
+
+    # print out number of duplicate reviews skipped
+    print(f"\nDuplicates skipped: {duplicates_skipped}")
+
+    return deduplicated_reviews_df
 
 def print_review_cards(df: pd.DataFrame, max_reviews: int = 10) -> None:
     """
