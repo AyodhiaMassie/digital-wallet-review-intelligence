@@ -6,6 +6,8 @@ import pandas as pd
 import yaml
 
 from data_ingestion.sources.google_play import GooglePlayReviewSource
+from src.database.ingestion_runs import create_ingestion_run, finish_ingestion_run
+from src.database.raw_reviews import insert_raw_reviews
 from src.validation.summarize_review_missing_fields import summarize_review_missing_fields
 from src.validation.deduplicate_reviews import deduplicate_reviews
 
@@ -17,9 +19,8 @@ REVIEW_COUNT_PER_APP = 10 # default number of revews fetched per app
 
 def load_app_configs(config_path: Path = APP_CONFIG_PATH) -> list[dict[str, Any]]:
     """
-    
     Load app settings from config/apps.yaml.
-    Only apps with enabled: true are returned.
+    This gets a list of apps with enabled: true
     """
 
     # open and read the yaml file and converts it into python dict
@@ -42,7 +43,8 @@ def load_app_configs(config_path: Path = APP_CONFIG_PATH) -> list[dict[str, Any]
 
 def fetch_reviews_for_app(app_config: dict[str, Any], review_count: int) -> pd.DataFrame:
     """
-    Fetch a small sample of recent Google Play reviews for one app.
+    Helper function to fetch a small sample of recent Google Play reviews for one app.
+    We return a pandas dataframe where each row represents one review for the app.
     """
 
     # get the values from the app dictionary
@@ -89,7 +91,7 @@ def fetch_reviews_for_app(app_config: dict[str, Any], review_count: int) -> pd.D
 
 def fetch_reviews_for_enabled_apps(review_count_per_app: int = REVIEW_COUNT_PER_APP) -> pd.DataFrame:
     """
-    Fetch recent reviews for every enabled app in config/apps.yaml.
+    Main function which fetches recent reviews for every enabled app in config/apps.yaml.
     """
 
     # load app configs
@@ -100,13 +102,71 @@ def fetch_reviews_for_enabled_apps(review_count_per_app: int = REVIEW_COUNT_PER_
 
     # loop through each enabled app
     for app_config in app_configs:
-        print(f"Fetching {review_count_per_app} reviews for {app_config['app_name']}...")
+        app_id = app_config["app_id"]
+        app_name = app_config["app_name"]
+        source = app_config.get("source", "google_play")
 
-        # fetch reviews for app
-        app_reviews_df = fetch_reviews_for_app(
-            app_config=app_config, # pass configs for that app
-            review_count=review_count_per_app, # pass review count
+        print(f"Fetching {review_count_per_app} reviews for {app_name}...")
+
+        # log new ingestion run
+        ingestion_run_id = create_ingestion_run(
+            app_id=app_id,
+            reviews_requested=review_count_per_app,
+            source=source,
         )
+        print(f"Started ingestion run {ingestion_run_id} for {app_name}.")
+
+        # create empty dataframe
+        app_reviews_df = pd.DataFrame()
+
+        try:
+            # fetch reviews for app
+            app_reviews_df = fetch_reviews_for_app(
+                app_config=app_config, # pass configs for that app
+                review_count=review_count_per_app, # pass review count
+            )
+
+            reviews_collected = len(app_reviews_df)
+
+            # insert fetched reviews into PostgreSQL
+            new_reviews_inserted, db_duplicates_skipped = insert_raw_reviews(
+                reviews_df=app_reviews_df,
+                ingestion_run_id=ingestion_run_id,
+            )
+
+            # end ingestion run
+            finish_ingestion_run(
+                run_id=ingestion_run_id,
+                reviews_collected=reviews_collected,
+                new_reviews_inserted=new_reviews_inserted,
+                duplicates_skipped=db_duplicates_skipped,
+                status="success",
+            )
+
+            # print summary
+            print(f"Collected {reviews_collected} reviews for {app_name}.")
+            print(f"Inserted {new_reviews_inserted} new reviews into PostgreSQL.")
+            print(f"Skipped {db_duplicates_skipped} duplicate reviews in PostgreSQL.")
+            print(f"Finished ingestion run {ingestion_run_id} with status: success.")
+
+        # if fetch reviews failed handle it
+        except Exception as error:
+            error_message = str(error)
+
+            # finish the ingestion run with status = failed
+            finish_ingestion_run(
+                run_id=ingestion_run_id,
+                reviews_collected=len(app_reviews_df),
+                new_reviews_inserted=0,
+                duplicates_skipped=0,
+                status="failed",
+                errors=error_message,
+            )
+
+            print(f"Failed ingestion run {ingestion_run_id} for {app_name}.")
+            print(f"Error: {error_message}")
+
+            continue
 
         # add dataframe of app reviews into all_review_dataframes list
         all_review_dataframes.append(app_reviews_df)

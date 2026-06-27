@@ -18,7 +18,7 @@ def create_ingestion_run(
     
     """
     add new row into ingestion_runs table when a new ingestion run occurs
-    and return the run_id
+    and return the ingestion runs run_id
     """
 
     # define sql query to add row into ingestion_runs table
