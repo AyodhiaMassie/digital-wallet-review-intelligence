@@ -1,0 +1,128 @@
+taxonomy_version: "v1"
+
+description: >
+  Initial issue taxonomy for classifying digital wallet app reviews.
+  These labels will be used later for weak labelling, manual labelling,
+  issue classification, dashboard metrics, spike detection, and priority scoring.
+
+scope_labels:
+  - label: wallet_related
+    display_name: Wallet related
+    description: >
+      The review is mainly about wallet, payment, account access, verification,
+      balance, refund, rewards, fraud, or support issues.
+
+  - label: non_wallet_related
+    display_name: Non-wallet related
+    description: >
+      The review is mainly about non-wallet parts of a superapp, such as shopping,
+      delivery, food, ride hailing, games, or other unrelated services.
+
+issue_categories:
+  - label: login_otp_authentication
+    display_name: Login, OTP, or authentication issue
+    description: >
+      Problems logging in, receiving OTP codes, passwords, PINs, biometric login,
+      or other authentication steps.
+
+  - label: top_up_failure
+    display_name: Top-up failure
+    description: >
+      Problems adding money, reloading the wallet, or topping up from a bank card
+      or bank account.
+
+  - label: wallet_balance_issue
+    display_name: Wallet balance issue
+    description: >
+      Problems where the wallet balance is missing, incorrect, delayed, frozen,
+      or not updated properly.
+
+  - label: failed_transfer
+    display_name: Failed transfer
+    description: >
+      Problems sending, receiving, or transferring money between users, bank
+      accounts, or wallets.
+
+  - label: qr_payment_failure
+    display_name: QR payment failure
+    description: >
+      Problems scanning QR codes, paying by QR, or completing QR-based wallet
+      payments.
+
+  - label: money_deducted_transaction_failed
+    display_name: Money deducted but transaction failed
+    description: >
+      Cases where money was deducted from the wallet or account, but the payment,
+      transfer, top-up, or transaction failed.
+
+  - label: refund_dispute
+    display_name: Refund or dispute issue
+    description: >
+      Problems involving refunds, delayed refunds, rejected refunds, transaction
+      disputes, or unresolved returned money.
+
+  - label: merchant_payment_issue
+    display_name: Merchant payment issue
+    description: >
+      Problems paying merchants, merchant acceptance issues, merchant settlement
+      issues, or merchant-related transaction failures.
+
+  - label: kyc_verification
+    display_name: KYC or verification issue
+    description: >
+      Problems with identity verification, account verification, document upload,
+      selfie checks, or KYC approval.
+
+  - label: account_locked_restricted
+    display_name: Account locked or restricted
+    description: >
+      Problems where the account is locked, suspended, restricted, blocked, or
+      inaccessible.
+
+  - label: fraud_scam_concern
+    display_name: Fraud or scam concern
+    description: >
+      Reviews mentioning scams, fraud, unauthorized transactions, suspicious
+      activity, or security concerns.
+
+  - label: cashback_rewards_promo
+    display_name: Cashback, rewards, or promo issue
+    description: >
+      Problems involving cashback, rewards, vouchers, coins, points, discounts,
+      campaigns, or promo eligibility.
+
+  - label: fees_charges
+    display_name: Fees or charges issue
+    description: >
+      Complaints about fees, charges, deductions, service costs, hidden costs,
+      or unexpected payment amounts.
+
+  - label: customer_service_support
+    display_name: Customer service or support issue
+    description: >
+      Complaints about slow support, unhelpful support, unresolved tickets,
+      poor communication, or difficulty contacting customer service.
+
+  - label: app_crash_bug_performance
+    display_name: App crash, bug, or performance issue
+    description: >
+      Problems with crashes, freezes, bugs, lag, loading failures, slow app
+      performance, or technical errors.
+
+  - label: app_update_issue
+    display_name: App update issue
+    description: >
+      Problems caused by a recent app update, forced update, version change,
+      missing features after update, or compatibility issue.
+
+  - label: general_positive_feedback
+    display_name: General positive feedback
+    description: >
+      Reviews that are mainly positive and do not describe a specific complaint
+      or issue.
+
+  - label: other_unclear
+    display_name: Other or unclear
+    description: >
+      Reviews that are too vague, mixed, incomplete, unrelated, or unclear to
+      confidently assign to a specific issue category.
