@@ -1,0 +1,460 @@
+rules_version: "v1"
+
+What is a rule:
+  A rule will be something that is pre-defined that looks for specific
+  keywords and phrases, and if those keywords and phrases are found
+  it will guess that the review is under a specific issue category
+
+description: >
+  This document defines the initial weak labeling rules for the digital wallet app reviews.
+  These weak labels will only be used as a starting point for classifying 
+  the reviews and will later be verified further by more rules
+
+classification_notes: 
+  - Review text will be converted to lowercase before checking the rules.
+  - Phrase matches should be checked before single keyword matches.
+  - These rules are intentionally simple and beginner-readable.
+  - Rules can be expanded after reviewing real labelled examples.
+
+scope_rules:
+  wallet_related:
+    description: >
+      Review appears to be about wallet, payment, money, verification, balance,
+      refund, fraud, rewards, or wallet support.
+    phrases:
+      - "e wallet"
+      - "e-wallet"
+      - "digital wallet"
+      - "wallet balance"
+      - "top up"
+      - "reload wallet"
+      - "add money"
+      - "qr payment"
+      - "scan qr"
+      - "money deducted"
+      - "transaction failed"
+      - "failed payment"
+      - "bank transfer"
+      - "transfer money"
+      - "cashback"
+      - "refund"
+      - "kyc"
+      - "verify account"
+      - "account locked"
+    keywords:
+      - wallet
+      - payment
+      - pay
+      - paid
+      - transaction
+      - transfer
+      - balance
+      - refund
+      - otp
+      - pin
+      - login
+      - reload
+      - topup
+      - cashback
+      - voucher
+      - fraud
+      - scam
+      - unauthorized
+      - verification
+
+  non_wallet_related:
+    description: >
+      Review appears to be mainly about non-wallet superapp features such as
+      shopping, delivery, food, rides, sellers, parcels, or orders.
+    phrases:
+      - "food delivery"
+      - "ride hailing"
+      - "my order"
+      - "late delivery"
+      - "delivery rider"
+      - "parcel lost"
+      - "seller cancelled"
+      - "wrong item"
+      - "item not received"
+      - "shop voucher"
+    keywords:
+      - delivery
+      - rider
+      - driver
+      - food
+      - restaurant
+      - parcel
+      - seller
+      - shopping
+      - order
+      - item
+      - product
+      - checkout
+      - shipping
+
+issue_rule_priority:
+  - money_deducted_transaction_failed
+  - fraud_scam_concern
+  - account_locked_restricted
+  - refund_dispute
+  - failed_transfer
+  - top_up_failure
+  - qr_payment_failure
+  - kyc_verification
+  - wallet_balance_issue
+  - merchant_payment_issue
+  - login_otp_authentication
+  - fees_charges
+  - cashback_rewards_promo
+  - customer_service_support
+  - app_crash_bug_performance
+  - app_update_issue
+  - general_positive_feedback
+  - other_unclear
+
+issue_rules:
+  login_otp_authentication:
+    description: >
+      Login, OTP, password, PIN, biometric login, or authentication problems.
+    phrases:
+      - "cannot login"
+      - "can't login"
+      - "unable to login"
+      - "otp not received"
+      - "did not receive otp"
+      - "wrong otp"
+      - "invalid otp"
+      - "forgot password"
+      - "reset password"
+      - "face id"
+      - "fingerprint login"
+    keywords:
+      - login
+      - logon
+      - otp
+      - password
+      - pin
+      - authentication
+      - biometric
+      - fingerprint
+      - verification
+
+  top_up_failure:
+    description: >
+      Problems adding money, reloading, or topping up the wallet.
+    phrases:
+      - "top up failed"
+      - "topup failed"
+      - "cannot top up"
+      - "can't top up"
+      - "unable to top up"
+      - "reload failed"
+      - "cannot reload"
+      - "add money failed"
+      - "bank deducted during top up"
+    keywords:
+      - topup
+      - reload
+      - top-up
+      - topup
+      - deposit
+
+  wallet_balance_issue:
+    description: >
+      Wallet balance is missing, wrong, delayed, frozen, or not updated.
+    phrases:
+      - "balance not updated"
+      - "wallet balance missing"
+      - "wrong balance"
+      - "balance disappeared"
+      - "money missing"
+      - "amount missing"
+      - "balance frozen"
+    keywords:
+      - balance
+      - missing
+      - disappeared
+      - frozen
+
+  failed_transfer:
+    description: >
+      Problems transferring money to another user, wallet, or bank account.
+    phrases:
+      - "transfer failed"
+      - "failed transfer"
+      - "cannot transfer"
+      - "can't transfer"
+      - "unable to transfer"
+      - "send money failed"
+      - "money not received"
+      - "recipient not received"
+      - "bank transfer failed"
+    keywords:
+      - transfer
+      - recipient
+      - remittance
+
+  qr_payment_failure:
+    description: >
+      Problems scanning QR codes or completing QR-based payments.
+    phrases:
+      - "qr payment failed"
+      - "scan qr failed"
+      - "cannot scan qr"
+      - "can't scan qr"
+      - "qr not working"
+      - "qr code not working"
+      - "payment qr failed"
+    keywords:
+      - qr
+      - scan
+      - scanner
+
+  money_deducted_transaction_failed:
+    description: >
+      Money was deducted, but the payment, transfer, top-up, or transaction failed.
+    phrases:
+      - "money deducted but transaction failed"
+      - "deducted but failed"
+      - "amount deducted but failed"
+      - "money deducted but payment failed"
+      - "charged but failed"
+      - "deducted from my account"
+      - "money gone"
+      - "bank deducted"
+      - "paid but failed"
+    keywords:
+      - deducted
+      - charged
+
+  refund_dispute:
+    description: >
+      Refund, dispute, reversal, or returned-money problems.
+    phrases:
+      - "refund not received"
+      - "no refund"
+      - "waiting for refund"
+      - "refund pending"
+      - "refund rejected"
+      - "dispute transaction"
+      - "raise dispute"
+      - "money not returned"
+      - "reverse transaction"
+    keywords:
+      - refund
+      - dispute
+      - reversal
+      - reversed
+
+  merchant_payment_issue:
+    description: >
+      Problems paying merchants or merchant-related transaction issues.
+    phrases:
+      - "merchant payment failed"
+      - "merchant did not receive"
+      - "merchant not received"
+      - "shop payment failed"
+      - "payment to merchant"
+      - "merchant qr"
+    keywords:
+      - merchant
+      - cashier
+      - shop
+
+  kyc_verification:
+    description: >
+      Identity verification, document upload, selfie, or KYC approval problems.
+    phrases:
+      - "kyc failed"
+      - "kyc rejected"
+      - "verification failed"
+      - "verify account failed"
+      - "identity verification"
+      - "document rejected"
+      - "selfie verification"
+      - "ic verification"
+    keywords:
+      - kyc
+      - verify
+      - verification
+      - identity
+      - selfie
+      - document
+      - ic
+
+  account_locked_restricted:
+    description: >
+      Account is locked, suspended, restricted, blocked, or inaccessible.
+    phrases:
+      - "account locked"
+      - "account blocked"
+      - "account suspended"
+      - "account restricted"
+      - "cannot access account"
+      - "can't access account"
+      - "unable to access account"
+      - "account frozen"
+    keywords:
+      - locked
+      - blocked
+      - suspended
+      - restricted
+      - frozen
+
+  fraud_scam_concern:
+    description: >
+      Scam, fraud, unauthorized transaction, suspicious activity, or security concern.
+    phrases:
+      - "unauthorized transaction"
+      - "not authorized"
+      - "without my permission"
+      - "someone used my account"
+      - "account hacked"
+      - "scam transaction"
+      - "fraud transaction"
+      - "suspicious activity"
+    keywords:
+      - scam
+      - fraud
+      - hacked
+      - unauthorized
+      - suspicious
+      - stolen
+
+  cashback_rewards_promo:
+    description: >
+      Cashback, rewards, vouchers, points, coins, discounts, or promo problems.
+    phrases:
+      - "cashback not received"
+      - "no cashback"
+      - "missing cashback"
+      - "voucher not working"
+      - "promo code not working"
+      - "reward not received"
+      - "points missing"
+      - "coins missing"
+    keywords:
+      - cashback
+      - reward
+      - rewards
+      - voucher
+      - promo
+      - discount
+      - points
+      - coins
+
+  fees_charges:
+    description: >
+      Complaints about fees, charges, deductions, service costs, or hidden costs.
+    phrases:
+      - "hidden fee"
+      - "extra charge"
+      - "service fee"
+      - "transaction fee"
+      - "admin fee"
+      - "charged extra"
+      - "unexpected charge"
+    keywords:
+      - fee
+      - fees
+      - charge
+      - charges
+      - costly
+      - expensive
+
+  customer_service_support:
+    description: >
+      Slow, unhelpful, unreachable, or unresolved customer support.
+    phrases:
+      - "customer service"
+      - "customer support"
+      - "support never reply"
+      - "no response"
+      - "slow response"
+      - "unhelpful support"
+      - "ticket unresolved"
+      - "case unresolved"
+      - "cannot contact support"
+    keywords:
+      - support
+      - service
+      - response
+      - ticket
+      - agent
+      - hotline
+      - helpdesk
+
+  app_crash_bug_performance:
+    description: >
+      App crashes, freezes, bugs, lag, loading issues, or technical performance problems.
+    phrases:
+      - "app crash"
+      - "app crashed"
+      - "keeps crashing"
+      - "app freeze"
+      - "app frozen"
+      - "stuck loading"
+      - "loading forever"
+      - "very slow"
+      - "lagging"
+      - "buggy app"
+      - "technical error"
+    keywords:
+      - crash
+      - crashed
+      - freeze
+      - frozen
+      - stuck
+      - loading
+      - slow
+      - lag
+      - laggy
+      - bug
+      - error
+
+  app_update_issue:
+    description: >
+      Problems after an app update, forced update, version change, or compatibility issue.
+    phrases:
+      - "after update"
+      - "new update"
+      - "latest update"
+      - "forced update"
+      - "update problem"
+      - "cannot update"
+      - "version not supported"
+      - "not compatible"
+    keywords:
+      - update
+      - updated
+      - version
+      - compatible
+      - compatibility
+
+  general_positive_feedback:
+    description: >
+      Mostly positive reviews without a specific complaint.
+    phrases:
+      - "good app"
+      - "great app"
+      - "easy to use"
+      - "very useful"
+      - "excellent app"
+      - "love this app"
+      - "works well"
+      - "best wallet"
+    keywords:
+      - good
+      - great
+      - excellent
+      - useful
+      - easy
+      - convenient
+      - nice
+      - best
+
+  other_unclear:
+    description: >
+      Default label when no clear issue rule matches.
+    phrases: []
+    keywords: []
