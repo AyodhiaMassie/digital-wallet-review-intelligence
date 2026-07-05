@@ -1,4 +1,5 @@
 from collections import Counter
+import json
 from pathlib import Path
 
 from sqlalchemy import text
@@ -279,6 +280,7 @@ def classify_clean_reviews(clean_reviews: list[dict], rules: dict) -> list[dict]
     """Classify clean reviews in memory without updating the database."""
 
     classified_reviews = []
+    label_version = rules.get("rules_version", "v1")
 
     # loop through each clean review and classify the cleaned text
     for clean_review in clean_reviews:
@@ -294,11 +296,83 @@ def classify_clean_reviews(clean_reviews: list[dict], rules: dict) -> list[dict]
                 "matched_scope_terms": classification["matched_scope_terms"],
                 "matched_issue_terms": classification["matched_issue_terms"],
                 "rule_match_score": classification["rule_match_score"],
+                "label_version": label_version,
             }
         )
 
     return classified_reviews
 
+
+def prepare_weak_label_for_database(classified_review: dict) -> dict:
+    """Prepare one classified review for inserting into review_labels_weak."""
+
+    return {
+        "review_id": classified_review["review_id"],
+        "app_id": classified_review["app_id"],
+        "scope_label": classified_review["scope_label"],
+        "issue_label": classified_review["issue_label"],
+        "matched_scope_terms": json.dumps(classified_review["matched_scope_terms"]),
+        "matched_issue_terms": json.dumps(classified_review["matched_issue_terms"]),
+        "rule_match_score": classified_review["rule_match_score"],
+        "label_version": classified_review["label_version"],
+    }
+
+
+def upsert_weak_labels(connection, classified_reviews: list[dict]) -> int:
+    """Insert weak labels, or update them if they already exist."""
+
+    # if there are no classified reviews to write, stop and return 0
+    if not classified_reviews:
+        return 0
+
+    # create sql query
+    # inserts weak labels into review_labels_weak table
+    sql = text(
+        """
+        INSERT INTO review_labels_weak (
+            review_id,
+            app_id,
+            scope_label,
+            issue_label,
+            matched_scope_terms,
+            matched_issue_terms,
+            rule_match_score,
+            label_version
+        )
+        VALUES (
+            :review_id,
+            :app_id,
+            :scope_label,
+            :issue_label,
+            CAST(:matched_scope_terms AS JSONB),
+            CAST(:matched_issue_terms AS JSONB),
+            :rule_match_score,
+            :label_version
+        )
+        ON CONFLICT (review_id) DO UPDATE
+        SET
+            app_id = EXCLUDED.app_id,
+            scope_label = EXCLUDED.scope_label,
+            issue_label = EXCLUDED.issue_label,
+            matched_scope_terms = EXCLUDED.matched_scope_terms,
+            matched_issue_terms = EXCLUDED.matched_issue_terms,
+            rule_match_score = EXCLUDED.rule_match_score,
+            label_version = EXCLUDED.label_version,
+            labelled_at = CURRENT_TIMESTAMP;
+        """
+    )
+
+    # set a counter to track each weak label that gets inserted or updated
+    inserted_or_updated_count = 0
+
+    # loop through each classified review and upsert the weak label
+    for classified_review in classified_reviews:
+        weak_label = prepare_weak_label_for_database(classified_review)
+        result = connection.execute(sql, weak_label)
+        inserted_or_updated_count += result.rowcount
+
+    # return the count of rows inserted or updated
+    return inserted_or_updated_count
 
 def print_rules_summary(rules: dict) -> None:
     """Print a small summary of the weak label rules."""
@@ -344,7 +418,7 @@ def print_classification_samples(classified_reviews: list[dict], sample_limit: i
 
 
 def main() -> None:
-    """Load weak label rules and classify clean_reviews rows in memory."""
+    """Load weak label rules, classify clean_reviews rows, and save weak labels."""
 
     rules = load_weak_label_rules()
     print_rules_summary(rules)
@@ -352,18 +426,25 @@ def main() -> None:
     # connect to database
     engine = get_database_engine()
 
-    with engine.connect() as connection:
+    with engine.begin() as connection:
         clean_reviews = fetch_clean_reviews(connection)
 
-    # if there are no clean reviews, stop without crashing
-    if not clean_reviews:
-        print()
-        print("No clean reviews found in clean_reviews. Nothing to classify.")
-        return
+        # if there are no clean reviews, stop without crashing
+        if not clean_reviews:
+            print()
+            print("Weak label classification summary")
+            print("Clean reviews read: 0")
+            print("No clean reviews found in clean_reviews. Nothing to classify.")
+            return
 
-    # classify rows in memory only
-    # this does not insert or update anything in the database
-    classified_reviews = classify_clean_reviews(clean_reviews, rules)
+        # classify rows in memory
+        classified_reviews = classify_clean_reviews(clean_reviews, rules)
+
+        # insert or update one weak label row for each clean review
+        inserted_or_updated_count = upsert_weak_labels(
+            connection,
+            classified_reviews,
+        )
 
     scope_label_counts = Counter(
         classified_review["scope_label"]
@@ -381,6 +462,10 @@ def main() -> None:
     print_label_counts("Counts by scope_label", scope_label_counts)
     print_label_counts("Counts by issue_label", issue_label_counts)
     print_classification_samples(classified_reviews)
+
+    print()
+    print("Weak label database write summary")
+    print(f"Weak labels inserted or updated: {inserted_or_updated_count}")
 
 
 if __name__ == "__main__":
