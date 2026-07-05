@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS review_labels_weak (
     issue_label TEXT NOT NULL,
     matched_scope_terms JSONB NOT NULL DEFAULT '[]'::jsonb,
     matched_issue_terms JSONB NOT NULL DEFAULT '[]'::jsonb,
-    rule_confidence NUMERIC NOT NULL CHECK (rule_confidence BETWEEN 0 AND 1),
+    rule_match_score INTEGER NOT NULL CHECK (rule_match_score BETWEEN 1 AND 5),
     label_version TEXT NOT NULL DEFAULT 'v1',
     labelled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

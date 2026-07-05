@@ -393,7 +393,11 @@ issue_rules:
       - "keeps crashing"
       - "app freeze"
       - "app frozen"
+      - "app stuck"
+      - "screen stuck"
       - "stuck loading"
+      - "stuck on loading"
+      - "stuck at loading"
       - "loading forever"
       - "very slow"
       - "lagging"
@@ -404,7 +408,6 @@ issue_rules:
       - crashed
       - freeze
       - frozen
-      - stuck
       - loading
       - slow
       - lag
