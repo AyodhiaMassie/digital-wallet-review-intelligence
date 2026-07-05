@@ -273,6 +273,8 @@ issue_rules:
       - "document rejected"
       - "selfie verification"
       - "ic verification"
+      - "identity card"
+      - "mykad"
     keywords:
       - kyc
       - verify
@@ -280,7 +282,6 @@ issue_rules:
       - identity
       - selfie
       - document
-      - ic
 
   account_locked_restricted:
     description: >
@@ -377,7 +378,6 @@ issue_rules:
       - "cannot contact support"
     keywords:
       - support
-      - service
       - response
       - ticket
       - agent
@@ -447,11 +447,8 @@ issue_rules:
       - "works well"
       - "best wallet"
     keywords:
-      - good
-      - great
       - excellent
       - useful
-      - easy
       - convenient
       - nice
       - best

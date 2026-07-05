@@ -1,6 +1,10 @@
+from collections import Counter
 from pathlib import Path
 
+from sqlalchemy import text
 import yaml
+
+from src.database.connection import get_database_engine
 
 # file path to weak_label_rules.yaml
 RULES_FILE_PATH = Path(__file__).resolve().parents[2] / "config" / "weak_label_rules.yaml"
@@ -247,6 +251,55 @@ def classify_review(review_text: str, rules: dict) -> dict:
         "rule_match_score": rule_match_score,
     }
 
+
+def fetch_clean_reviews(connection) -> list[dict]:
+    """Read cleaned reviews from the clean_reviews table."""
+
+    # create sql query
+    # reads the fields needed for weak labelling from clean_reviews
+    sql = text(
+        """
+        SELECT
+            review_id,
+            app_id,
+            cleaned_review_text
+        FROM clean_reviews
+        ORDER BY review_id;
+        """
+    )
+
+    # send the sql query to postgresql
+    result = connection.execute(sql)
+
+    # return a list of dictionaries so each review is easy to read in Python
+    return [dict(row) for row in result.mappings()]
+
+
+def classify_clean_reviews(clean_reviews: list[dict], rules: dict) -> list[dict]:
+    """Classify clean reviews in memory without updating the database."""
+
+    classified_reviews = []
+
+    # loop through each clean review and classify the cleaned text
+    for clean_review in clean_reviews:
+        classification = classify_review(clean_review["cleaned_review_text"], rules)
+
+        classified_reviews.append(
+            {
+                "review_id": clean_review["review_id"],
+                "app_id": clean_review["app_id"],
+                "cleaned_review_text": clean_review["cleaned_review_text"],
+                "scope_label": classification["scope_label"],
+                "issue_label": classification["issue_label"],
+                "matched_scope_terms": classification["matched_scope_terms"],
+                "matched_issue_terms": classification["matched_issue_terms"],
+                "rule_match_score": classification["rule_match_score"],
+            }
+        )
+
+    return classified_reviews
+
+
 def print_rules_summary(rules: dict) -> None:
     """Print a small summary of the weak label rules."""
 
@@ -262,35 +315,72 @@ def print_rules_summary(rules: dict) -> None:
     print(f"Number of issue priority labels: {len(issue_priority_labels)}")
 
 
+def print_label_counts(title: str, label_counts: Counter) -> None:
+    """Print counts for each label."""
+
+    print()
+    print(title)
+
+    for label, count in label_counts.items():
+        print(f"{label}: {count}")
+
+
+def print_classification_samples(classified_reviews: list[dict], sample_limit: int = 10) -> None:
+    """Print a small sample of classified clean reviews."""
+
+    print()
+    print(f"Sample classification results, up to {sample_limit}")
+
+    for classified_review in classified_reviews[:sample_limit]:
+        print("=" * 80)
+        print("Review ID:", classified_review["review_id"])
+        print("App ID:", classified_review["app_id"])
+        print("Cleaned review text:", classified_review["cleaned_review_text"])
+        print("Scope label:", classified_review["scope_label"])
+        print("Issue label:", classified_review["issue_label"])
+        print("Matched scope terms:", classified_review["matched_scope_terms"])
+        print("Matched issue terms:", classified_review["matched_issue_terms"])
+        print("Rule match score:", classified_review["rule_match_score"])
+
+
 def main() -> None:
-    """Load weak label rules, print a summary, and classify example reviews."""
+    """Load weak label rules and classify clean_reviews rows in memory."""
 
     rules = load_weak_label_rules()
     print_rules_summary(rules)
 
-    test_reviews = [
-        "I can't access my wallet. The app keeps saying login failed.",
-        "My wallet balance is missing after the latest update.",
-        "The app crashes every time I try to open it.",
-        "I love the new design, very clean and easy to use.",
-        "My transaction is stuck and the payment is still pending.",
-        "The customer support team is not replying to my messages.",
-        "I forgot my wallet password and cannot recover my account.",
-        "The app is slow and freezes on the home screen.",
-    ]
+    # connect to database
+    engine = get_database_engine()
+
+    with engine.connect() as connection:
+        clean_reviews = fetch_clean_reviews(connection)
+
+    # if there are no clean reviews, stop without crashing
+    if not clean_reviews:
+        print()
+        print("No clean reviews found in clean_reviews. Nothing to classify.")
+        return
+
+    # classify rows in memory only
+    # this does not insert or update anything in the database
+    classified_reviews = classify_clean_reviews(clean_reviews, rules)
+
+    scope_label_counts = Counter(
+        classified_review["scope_label"]
+        for classified_review in classified_reviews
+    )
+    issue_label_counts = Counter(
+        classified_review["issue_label"]
+        for classified_review in classified_reviews
+    )
 
     print()
-    print("Test review classifications")
-    for review in test_reviews:
-        result = classify_review(review, rules)
+    print("Weak label classification summary")
+    print(f"Clean reviews read: {len(clean_reviews)}")
 
-        print("=" * 80)
-        print("Review:", review)
-        print("Scope label:", result["scope_label"])
-        print("Issue label:", result["issue_label"])
-        print("Matched scope terms:", result["matched_scope_terms"])
-        print("Matched issue terms:", result["matched_issue_terms"])
-        print("Rule match score:", result["rule_match_score"])
+    print_label_counts("Counts by scope_label", scope_label_counts)
+    print_label_counts("Counts by issue_label", issue_label_counts)
+    print_classification_samples(classified_reviews)
 
 
 if __name__ == "__main__":
