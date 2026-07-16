@@ -1,0 +1,61 @@
+feature_safety_version: "v1"
+
+description: >
+  Fields that should not be used as model input features.
+  These fields are labels, predictions, identifiers, audit timestamps,
+  post-outcome data, or other leakage-prone values.
+
+feature_safety_notes:
+  - Labels should be targets or evaluation data, not model input features.
+  - Predictions should not be used as inputs to train the same prediction task.
+  - review_id is useful for joining tables but should not be a model feature.
+  - Developer replies may happen after the review, so they are leakage-prone unless carefully time-filtered.
+  - Timestamps used for audit or logging should not automatically become model features.
+
+# Label columns are answers or evaluation fields.
+# They should be used as targets, not as inputs.
+label_columns:
+  - scope_label
+  - primary_issue_label
+  - priority_label
+  - weak_scope_label
+  - weak_primary_issue_label
+  - manual_scope_label
+  - manual_primary_issue_label
+  - manual_priority_label
+
+# Prediction columns are outputs from models or scoring logic.
+# Do not train a model using its own outputs as features.
+prediction_columns:
+  - predicted_issue
+  - issue_confidence
+  - priority_score
+  - priority_band
+  - recommended_team
+  - reason_codes
+  - model_version
+
+# Identifier columns are useful for joins, debugging, and traceability.
+# They should not be treated as model inputs.
+identifier_columns:
+  - review_id
+  - user_name
+  - user_id
+
+# Leakage-risk columns may contain information that was only known after the review.
+# Use extra care before turning anything like this into a feature.
+leakage_risk_columns:
+  - developer_reply
+  - developer_reply_present_after_review
+  - labelled_at
+  - created_at
+  - updated_at
+  - scraped_at
+  - ingestion_run_id
+
+# Post-prediction columns are downstream tables or feedback records.
+# They should not be used as model inputs for the same prediction task.
+post_prediction_sources:
+  - review_labels_manual
+  - review_predictions
+  - manual_feedback

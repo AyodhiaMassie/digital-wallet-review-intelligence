@@ -1,0 +1,52 @@
+feature_safety_version: "v1"
+
+description: >
+  Allowed feature ideas for future model training.
+  Some of these fields may not exist yet. This file defines the intended
+  safe feature set, not the feature-building code.
+
+feature_safety_notes:
+  - These fields are allowed feature ideas for future issue classification and priority scoring models.
+  - Time-aware features must only use data available before or at the review or prediction time.
+  - Rating is allowed for issue classification and priority scoring.
+  - Do not use rating as an input feature if the project later predicts rating or sentiment directly.
+  - Some listed features may not exist yet; this file defines the intended safe feature set.
+
+# Text features are created from the review text itself.
+text_features:
+  - cleaned_review_text
+  - review_text_length
+  - word_count
+
+# Metadata features describe the review or app without using labels or predictions.
+metadata_features:
+  - rating
+  - app_id
+  - app_version
+  - review_date
+  - day_of_week
+  - thumbs_up_count
+  - developer_reply_present
+  - language
+
+# Rule-based indicators are simple yes/no features created from keyword or phrase checks.
+rule_based_indicator_features:
+  - has_money_loss_terms
+  - has_payment_failure_terms
+  - has_refund_terms
+  - has_fraud_scam_terms
+  - has_login_otp_terms
+  - has_kyc_terms
+  - has_support_terms
+  - has_crash_bug_terms
+  - has_promo_reward_terms
+
+# Future time-aware features may be useful, but they must be built carefully.
+# They should only look backward from the review or prediction time.
+future_time_aware_features:
+  - negative_reviews_last_7d_by_app
+  - issue_count_last_7d_by_app
+  - issue_share_last_30d_by_app
+  - average_rating_last_30d_by_app
+  - review_volume_change_vs_baseline
+  - same_issue_spike_score_prior_period
