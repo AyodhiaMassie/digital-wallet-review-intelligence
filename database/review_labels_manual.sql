@@ -5,7 +5,7 @@
 -- Weak labels are automatic guesses; manual labels are the trusted labels created or reviewed by a person.
 
 CREATE TABLE IF NOT EXISTS review_labels_manual (
-    review_id TEXT PRIMARY KEY REFERENCES clean_reviews(redview_id),
+    review_id TEXT PRIMARY KEY REFERENCES clean_reviews(review_id),
     scope_label TEXT NOT NULL CHECK (scope_label IN (
         'wallet_related',
         'non_wallet_related',
