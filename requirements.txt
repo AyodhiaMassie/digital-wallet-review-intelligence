@@ -3,3 +3,4 @@ pandas
 PyYAML
 SQLAlchemy
 psycopg2-binary
+python-dotenv

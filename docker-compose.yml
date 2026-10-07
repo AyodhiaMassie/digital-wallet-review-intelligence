@@ -3,11 +3,11 @@ services:
     image: postgres:16
     container_name: digital_wallet_postgres
     environment:
-      POSTGRES_DB: digital_wallet_reviews
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: "${POSTGRES_DB:-digital_wallet_reviews}"
+      POSTGRES_USER: "${POSTGRES_USER:?Set POSTGRES_USER in .env or the environment}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env or the environment}"
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
